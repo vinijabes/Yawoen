@@ -31,9 +31,14 @@ func (c *CompanyController) GetCompanies(w http.ResponseWriter, r *http.Request)
 	return
 }
 
-//GetCompany GET /v1/company?name={value}&zip={value} application/json
-func (c *CompanyController) GetCompany(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("/GetCompany"))
+//GetCompanyByNameAndZip GET /v1/company?name={value}&zip={value} application/json
+func (c *CompanyController) GetCompanyByNameAndZip(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+	zip := r.URL.Query().Get("zip")
+
+	companie := c.model.FindByNameAndZip(name, zip)
+	util.RespondJSON(w, http.StatusOK, companie)
+
 	return
 }
 

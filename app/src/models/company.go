@@ -51,3 +51,19 @@ func (m CompanyModel) AddCompany(company Company) bool {
 
 	return true
 }
+
+func (m CompanyModel) FindByNameAndZip(name, zip string) *Company {
+	con := Connect()
+	companies := con.Collection("companies")
+	defer con.Close()
+
+	result := Company{}
+	search := bson.RegEx{Pattern: name + ".*", Options: ""}
+	err := companies.Find(bson.M{"name": search, "addresszip": zip}).One(&result)
+
+	if err != nil {
+		return nil
+	}
+
+	return &result
+}

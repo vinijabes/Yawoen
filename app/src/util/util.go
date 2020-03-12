@@ -1,6 +1,7 @@
 package util
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 )
@@ -18,7 +19,12 @@ func RespondJSON(w http.ResponseWriter, status int, payload interface{}) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	w.WriteHeader(status)
-	w.Write([]byte(response))
+
+	if bytes.Compare(response, []byte("null")) != 0 {
+		w.Write([]byte(response))
+	} else {
+		w.Write([]byte("{}"))
+	}
 }
 
 //RespondError makes the error response with payload as json format

@@ -26,10 +26,10 @@ var routes = Routes{
 		companyController.GetCompanies,
 	},
 	Route{
-		"GetCompany",
+		"SearchCompany",
 		"GET",
-		"/v1/company/search?name={value}&zip={value}",
-		companyController.GetCompany,
+		"/v1/company/search",
+		companyController.GetCompanyByNameAndZip,
 	},
 	Route{
 		"CreateCompany",
