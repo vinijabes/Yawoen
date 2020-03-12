@@ -4,10 +4,11 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"app/src/routes"
 )
 
 func main() {
-	router := mux.NewRouter()
+	router := routes.NewRouter()
+	log.Print("Iniciou")
 	log.Fatal(http.ListenAndServe(":5000", router))
 }
