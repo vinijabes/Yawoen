@@ -22,25 +22,25 @@ var routes = Routes{
 	Route{
 		"GetCompanies",
 		"GET",
-		"/v1/company",
+		"/v1/companies",
 		companyController.GetCompanies,
 	},
 	Route{
 		"SearchCompany",
 		"GET",
-		"/v1/company/search",
+		"/v1/companies/search",
 		companyController.GetCompanyByNameAndZip,
 	},
 	Route{
 		"CreateCompany",
 		"POST",
-		"/v1/company",
+		"/v1/companies",
 		companyController.CreateCompany,
 	},
 	Route{
 		"MergeCompany",
 		"POST",
-		"/v1/company/merge",
+		"/v1/companies/merge",
 		companyController.MergeCompanies,
 	},
 }

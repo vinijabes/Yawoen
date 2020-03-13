@@ -1,13 +1,18 @@
 package tests
 
 import (
+	"fmt"
 	"testing"
 
 	"app/src/models"
 )
 
-func TestAddCompany(t *testing.T) {
+func init() {
+	fmt.Println("Configuring test enviroment!")
 	models.DatabaseHost = "localhost:27017"
+}
+
+func TestAddCompany(t *testing.T) {
 	testCompany := models.Company{}
 
 	testCompany.Name = "Company teste"
@@ -21,7 +26,6 @@ func TestAddCompany(t *testing.T) {
 }
 
 func TestSearchCompanyByNameAndZip(t *testing.T) {
-	models.DatabaseHost = "localhost:27017"
 
 	model := models.CompanyModel{}
 	companie := model.FindByNameAndZip("Comp", "12345")
@@ -31,7 +35,6 @@ func TestSearchCompanyByNameAndZip(t *testing.T) {
 }
 
 func TestSearchCompanyByName(t *testing.T) {
-	models.DatabaseHost = "localhost:27017"
 
 	model := models.CompanyModel{}
 	companie := model.FindByName("Company teste")
@@ -41,7 +44,6 @@ func TestSearchCompanyByName(t *testing.T) {
 }
 
 func TestUpdateCompany(t *testing.T) {
-	models.DatabaseHost = "localhost:27017"
 
 	model := models.CompanyModel{}
 	companie := model.FindByName("Company teste")

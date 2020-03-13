@@ -43,17 +43,17 @@ func isWebsiteValid(website string) bool {
 	return match
 }
 
-//GetCompanies GET /v1/company application/json
+//GetCompanies GET /v1/companies application/json
 func (c *CompanyController) GetCompanies(w http.ResponseWriter, r *http.Request) {
 	companies := c.model.GetCompanies()
 	util.RespondJSON(w, http.StatusOK, companies)
 	return
 }
 
-//GetCompanyByNameAndZip GET /v1/company?name={value}&zip={value} application/json
+//GetCompanyByNameAndZip GET /v1/companies?name={value}&zip={value} application/json
 func (c *CompanyController) GetCompanyByNameAndZip(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
-	zip := r.URL.Query().Get("zip")
+	zip := r.URL.Query().Get("zipCode")
 
 	companie := c.model.FindByNameAndZip(name, zip)
 	util.RespondJSON(w, http.StatusOK, companie)
@@ -61,7 +61,7 @@ func (c *CompanyController) GetCompanyByNameAndZip(w http.ResponseWriter, r *htt
 	return
 }
 
-//CreateCompany POST /v1/company application/json
+//CreateCompany POST /v1/companies application/json
 func (c *CompanyController) CreateCompany(w http.ResponseWriter, r *http.Request) {
 	var company models.Company
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 128*1024*8)) //128kb
@@ -113,7 +113,7 @@ func (c *CompanyController) CreateCompany(w http.ResponseWriter, r *http.Request
 	return
 }
 
-//MergeCompanies POST /v1/company multipart/form-data
+//MergeCompanies POST /v1/companies multipart/form-data
 func (c *CompanyController) MergeCompanies(w http.ResponseWriter, r *http.Request) {
 	file, fileHandler, err := r.FormFile("csv")
 	if err != nil {
