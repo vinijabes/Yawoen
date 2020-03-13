@@ -83,7 +83,7 @@ func (c *CompanyController) CreateCompany(w http.ResponseWriter, r *http.Request
 
 //MergeCompanies POST /v1/companies multipart/form-data
 func (c *CompanyController) MergeCompanies(w http.ResponseWriter, r *http.Request) {
-	file, fileHandler, err := r.FormFile("csv")
+	file, _, err := r.FormFile("csv")
 	if err != nil {
 		log.Fatalln("Error MergeCompany", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -91,17 +91,17 @@ func (c *CompanyController) MergeCompanies(w http.ResponseWriter, r *http.Reques
 	}
 	defer file.Close()
 
-	f, err := os.OpenFile(fileHandler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
-	if err != nil {
-		log.Fatalln("Error MergeCompany", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	defer f.Close()
+	// f, err := os.OpenFile(fileHandler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
+	// if err != nil {
+	// 	log.Fatalln("Error MergeCompany", err)
+	// 	w.WriteHeader(http.StatusInternalServerError)
+	// 	return
+	// }
+	// defer f.Close()
 
-	io.Copy(f, file)
-	uploadedFile, _ := os.Open(fileHandler.Filename)
-	reader := csv.NewReader(bufio.NewReader(uploadedFile))
+	// io.Copy(f, file)
+	// uploadedFile, _ := os.Open(fileHandler.Filename)
+	reader := csv.NewReader(bufio.NewReader(file))
 	reader.Comma = ';'
 	records, err := reader.ReadAll()
 
