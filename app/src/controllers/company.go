@@ -3,11 +3,14 @@ package controllers
 import (
 	"app/src/models"
 	"app/src/util"
+	"bufio"
+	"encoding/csv"
 	"encoding/json"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 )
 
@@ -22,6 +25,22 @@ func NewCompanyController() *CompanyController {
 	c := new(CompanyController)
 	c.model = models.CompanyModel{}
 	return c
+}
+
+func isNameValid(name string) bool {
+	match, _ := regexp.MatchString("^[A-Z ]*$", name)
+	return match
+}
+
+func isZipValid(zip string) bool {
+	match, _ := regexp.MatchString("^[0-9]{5}$", zip)
+	return match
+}
+
+func isWebsiteValid(website string) bool {
+	var re = regexp.MustCompile(`(?m)^([-a-z0-9@:%._\+~#=]{1,256}\.[a-z0-9()]{1,6}\b([-a-z0-9()@:%_\+.~#?&//=]*))?$`)
+	match := re.MatchString(website)
+	return match
 }
 
 //GetCompanies GET /v1/company application/json
@@ -66,21 +85,17 @@ func (c *CompanyController) CreateCompany(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	match, _ := regexp.MatchString("^[A-Z]*$", company.Name)
-	if !match {
+	if !isNameValid(company.Name) {
 		util.RespondError(w, 422, "Company name must be Uppercase")
 		return
 	}
 
-	match, _ = regexp.MatchString("^[0-9]{5}$", company.AddressZip)
-	if !match {
+	if !isZipValid(company.AddressZip) {
 		util.RespondError(w, 422, "Company zip must contain five digits")
 		return
 	}
 
-	var re = regexp.MustCompile(`(?m)^[-a-z0-9@:%._\+~#=]{1,256}\.[a-z0-9()]{1,6}\b([-a-z0-9()@:%_\+.~#?&//=]*)$`)
-	match = re.MatchString(company.Website)
-	if !match {
+	if !isWebsiteValid(company.Website) {
 		util.RespondError(w, 422, "Company website must be an lower case url.(e.g www.example.com)")
 		return
 	}
@@ -100,6 +115,82 @@ func (c *CompanyController) CreateCompany(w http.ResponseWriter, r *http.Request
 
 //MergeCompanies POST /v1/company multipart/form-data
 func (c *CompanyController) MergeCompanies(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("/MergeCompanies"))
+	file, fileHandler, err := r.FormFile("csv")
+	if err != nil {
+		log.Fatalln("Error MergeCompany", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	f, err := os.OpenFile(fileHandler.Filename, os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		log.Fatalln("Error MergeCompany", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer f.Close()
+
+	io.Copy(f, file)
+	uploadedFile, _ := os.Open(fileHandler.Filename)
+	reader := csv.NewReader(bufio.NewReader(uploadedFile))
+	reader.Comma = ';'
+	records, err := reader.ReadAll()
+
+	if err != nil {
+		log.Fatalln("Error MergeCompany", err)
+		w.WriteHeader(http.StatusBadRequest)
+		//w.Write
+		return
+	}
+	if len(records) == 0 {
+		log.Fatalln("Empty file")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	for i, record := range records {
+		if i == 0 {
+			continue
+		}
+		company := models.Company{Name: record[0], AddressZip: record[1], Website: record[2]}
+
+		retrievedCompany := c.model.FindByName(company.Name)
+		if retrievedCompany == nil {
+			continue
+		}
+
+		retrievedCompany.Website = company.Website
+		c.model.UpdateCompany(*retrievedCompany)
+	}
+
+	w.WriteHeader(http.StatusOK)
 	return
+}
+
+//LoadCompanies load companies from a csv file
+func (c *CompanyController) LoadCompanies(filename string) {
+	file, _ := os.Open(filename)
+	reader := csv.NewReader(bufio.NewReader(file))
+	reader.Comma = ';'
+	records, err := reader.ReadAll()
+
+	if err != nil {
+		log.Fatalln("Error importing companies ", err)
+		return
+	}
+
+	for i, record := range records {
+		if i == 0 {
+			continue
+		}
+
+		company := models.Company{Name: record[0], AddressZip: record[1], Website: ""}
+
+		if !isNameValid(company.Name) || !isZipValid(company.AddressZip) {
+			continue
+		}
+
+		c.model.AddCompany(company)
+	}
 }
