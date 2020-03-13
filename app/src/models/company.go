@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"log"
+	"regexp"
 	"strings"
 
 	"gopkg.in/mgo.v2/bson"
@@ -12,7 +13,7 @@ import (
 type Company struct {
 	ID         bson.ObjectId `bson:"_id"`
 	Name       string        `json:"name"`
-	AddressZip string        `json:"zip"`
+	AddressZip string        `json:"zipCode"`
 	Website    string        `json:"website"`
 }
 
@@ -21,6 +22,22 @@ type Companies []Company
 
 //CompanyModel A model with Company API data
 type CompanyModel struct{}
+
+func isNameValid(name string) bool {
+	match, _ := regexp.MatchString("^[A-Z&' ]*$", name)
+	return match
+}
+
+func isZipValid(zip string) bool {
+	match, _ := regexp.MatchString("^[0-9]{5}$", zip)
+	return match
+}
+
+func isWebsiteValid(website string) bool {
+	var re = regexp.MustCompile(`(?mi)^((http:\/\/www\.|https:\/\/www\.|http:\/\/|https:\/\/)[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?)?$`)
+	match := re.MatchString(website)
+	return match
+}
 
 //GetCompanies Return a list of companies
 func (m CompanyModel) GetCompanies() Companies {
@@ -47,11 +64,15 @@ func (m CompanyModel) AddCompany(company Company) bool {
 		return false
 	}
 
+	company.Name = strings.ToUpper(company.Name)
+	if !isNameValid(company.Name) || !isZipValid(company.AddressZip) || !isWebsiteValid(company.Website) {
+		return false
+	}
+
 	companies := con.Collection("companies")
 	defer con.Close()
 
 	company.ID = bson.NewObjectId()
-	company.Name = strings.ToUpper(company.Name)
 
 	err := companies.Insert(company)
 
@@ -70,10 +91,14 @@ func (m CompanyModel) UpdateCompany(company Company) bool {
 		return false
 	}
 
+	company.Name = strings.ToUpper(company.Name)
+	if !isNameValid(company.Name) || !isZipValid(company.AddressZip) || !isWebsiteValid(company.Website) {
+		return false
+	}
+
 	companies := con.Collection("companies")
 	defer con.Close()
 
-	company.Name = strings.ToUpper(company.Name)
 	err := companies.UpdateId(company.ID, company)
 
 	if err != nil {

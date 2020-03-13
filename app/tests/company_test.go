@@ -23,6 +23,28 @@ func TestAddCompany(t *testing.T) {
 	if !model.AddCompany(testCompany) {
 		t.Errorf("Failed to add company")
 	}
+
+	testCompany.Name = "Company 12345"
+	if model.AddCompany(testCompany) {
+		t.Errorf("Inserted wrong formated company name")
+	}
+
+	testCompany.Name = "Company teste"
+	testCompany.AddressZip = "123456"
+	if model.AddCompany(testCompany) {
+		t.Errorf("Inserted wrong formated company zip")
+	}
+
+	testCompany.AddressZip = "12345"
+	testCompany.Website = "teste.com"
+	if model.AddCompany(testCompany) {
+		t.Errorf("Inserted wrong formated website")
+	}
+
+	testCompany.Website = ""
+	if !model.AddCompany(testCompany) {
+		t.Errorf("Failed to add company with empty website")
+	}
 }
 
 func TestSearchCompanyByNameAndZip(t *testing.T) {

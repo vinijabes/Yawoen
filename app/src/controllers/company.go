@@ -11,7 +11,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"regexp"
 )
 
 //CompanyController ...
@@ -27,22 +26,6 @@ func NewCompanyController() *CompanyController {
 	return c
 }
 
-func isNameValid(name string) bool {
-	match, _ := regexp.MatchString("^[A-Z ]*$", name)
-	return match
-}
-
-func isZipValid(zip string) bool {
-	match, _ := regexp.MatchString("^[0-9]{5}$", zip)
-	return match
-}
-
-func isWebsiteValid(website string) bool {
-	var re = regexp.MustCompile(`(?m)^([-a-z0-9@:%._\+~#=]{1,256}\.[a-z0-9()]{1,6}\b([-a-z0-9()@:%_\+.~#?&//=]*))?$`)
-	match := re.MatchString(website)
-	return match
-}
-
 //GetCompanies GET /v1/companies application/json
 func (c *CompanyController) GetCompanies(w http.ResponseWriter, r *http.Request) {
 	companies := c.model.GetCompanies()
@@ -53,7 +36,7 @@ func (c *CompanyController) GetCompanies(w http.ResponseWriter, r *http.Request)
 //GetCompanyByNameAndZip GET /v1/companies?name={value}&zip={value} application/json
 func (c *CompanyController) GetCompanyByNameAndZip(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
-	zip := r.URL.Query().Get("zipCode")
+	zip := r.URL.Query().Get("zip")
 
 	companie := c.model.FindByNameAndZip(name, zip)
 	util.RespondJSON(w, http.StatusOK, companie)
@@ -85,25 +68,10 @@ func (c *CompanyController) CreateCompany(w http.ResponseWriter, r *http.Request
 		}
 	}
 
-	if !isNameValid(company.Name) {
-		util.RespondError(w, 422, "Company name must be Uppercase")
-		return
-	}
-
-	if !isZipValid(company.AddressZip) {
-		util.RespondError(w, 422, "Company zip must contain five digits")
-		return
-	}
-
-	if !isWebsiteValid(company.Website) {
-		util.RespondError(w, 422, "Company website must be an lower case url.(e.g www.example.com)")
-		return
-	}
-
 	result := c.model.AddCompany(company)
 
 	if !result {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(400)
 		return
 	}
 
@@ -186,11 +154,6 @@ func (c *CompanyController) LoadCompanies(filename string) {
 		}
 
 		company := models.Company{Name: record[0], AddressZip: record[1], Website: ""}
-
-		if !isNameValid(company.Name) || !isZipValid(company.AddressZip) {
-			continue
-		}
-
 		c.model.AddCompany(company)
 	}
 }
